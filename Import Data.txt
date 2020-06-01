@@ -1,0 +1,211 @@
+https://github.com/fred-aiello/Python-Test
+
+
+    pip install pandas (1.0.3)
+    pip install numpy (1.18.4)
+    pip install quandl  (3.5.0)
+    pip install watermark (2.0.2)
+    pip install matplotlib (3.2.1)
+    pip install beautifulsoup4
+
+import pandas 
+import numpy 
+import quandl  
+import watermark 
+import matplotlib 
+from bs4 import BeautifulSoup
+
+import watermark
+%load_ext watermark
+
+#python, ipython, packages and machine characteristics
+%watermark -v -n -p pandas,numpy,os, watermark
+
+
+
+	Financial data
+
+    Google
+	Yahoo
+	Boursorama
+	Nasdaq
+	Bloomberg
+	
+	Real Estate
+
+    Airbnb
+    Leboncoin
+    SeLoger
+    Craigslist
+    Zillow
+	
+	https://en.lobstr.io/#form
+	
+	
+	
+	import requests
+from bs4 import BeautifulSoup
+
+
+page = requests.get('https://fr.finance.yahoo.com/quote/%5EFCHI/components?p=%5EFCHI')
+
+# Create a BeautifulSoup object
+soup = BeautifulSoup(page.text, 'html.parser')
+
+
+01/01/1990 vers 18/05/2020
+https://query1.finance.yahoo.com/v7/finance/download/%5EFCHI?period1=631152000&period2=1589760000&interval=1d&events=history
+
+======================================================================================
+import pandas as pd
+import os
+
+#Current directory
+%cd
+pwd
+
+#Change directory
+import os
+os.chdir('c:user/chethan/Desktop')
+
+# Print current working directory
+print "Current working dir : %s" % os.getcwd()
+
+#Import CSV data from local folder
+url = '\\PARADFS101\7folder\AIELLOF\Documents\Personnel\Python\Input\CAC40 Components.csv'
+data = pd.read_csv(url)
+display(df)
+
+\\PARADFS101\7folder\AIELLOF\Documents\Personnel\Python\Input\CAC40 Components.csv
+
+#======================================================================================
+Import data from WEB
+======================================================================================
+
+import pandas as pd
+import os
+
+#Import CSV data from Web
+url = "https://query1.finance.yahoo.com/v7/finance/download/%5EFCHI?period1=631152000&period2=1589760000&interval=1d&events=history"
+data = pd.read_csv(url)
+
+#01/01/2000
+#https://query1.finance.yahoo.com/v7/finance/download/FP.PA?period1=946684800&period2=1590019200&interval=1d&events=history
+
+# Convert the dictionary into DataFrame 
+df = pd.DataFrame(data) 
+
+#Print first rows
+display (df.head())
+
+#Print last rows
+print(df.tail())
+
+# Add new column with a static value 
+df['Stock'] = 'CAC 40'
+
+# Add new column with a formula (name reference) 
+df['Diff1'] = df.High-df.Low
+# Add new column with a formula (relaive reference)
+df['Diff2'] = df.iloc[:,2]-df.iloc[:,3]
+
+
+# Add new column with a sum of the line (sum over the column axis,i.e sum each row) ) 
+#df['sum']=df.sum(axis=1,skipna = True)    #axis=0 sum over the index (rows) axis, i.e sum each column) 
+
+
+# finding sum over index axis 
+# By default the axis is set to 0 
+df = df.append(df.sum(axis = 0, skipna = True),ignore_index=True,sort=False) 
+
+#nb of lines
+df.shape[0]
+
+#Print first rows
+print(df.head())
+
+#Print last rows
+print(df.tail())
+
+
+
+
+
+
+
+================================================================================
+Return calculation
+================================================================================
+
+for i in range (1,df.shape[0]):
+     df.loc[i,'Returns']=(df.iloc[i,5]/df.iloc[i-1,5])-1
+	#Using loc (not only integer)
+	#df.loc[i,'Return'] = ((df.loc[i,'Adj Close'] /df.loc[i-1,'Adj Close'])-1)*100
+    #df.style.format({'Return': '{:,.2f}'.format})
+ 
+#Verctorisation (faster)
+
+df['Return Vect']=df['Adj Close']/df['Adj Close'].shift(1) #np.log(df['Adj Close']/df['Adj Close'].shift(1))
+#df['Diff']=df['Return Vect']-df['Return']
+df.drop('Return2', axis=1)
+
+# Logic for forward-filling values
+for i in range(j+1, df.shape[0]):
+    df.loc[i,'weight'] = df.loc[i-1,'weight'] * (1 + df.loc[i,'return'])
+
+# Logic for backward-filling values
+for i in range(j-1, -1, -1):
+    df.loc[i,'weight'] = df.loc[i+1,'weight'] / (1 + df.loc[i,'return'])
+	
+Inclduding conditions
+	
+def f(row):
+    if row['A'] == row['B']:
+        val = 0
+    elif row['A'] > row['B']:
+        val = 1
+    else:
+        val = -1
+    return val	
+	
+	df.column[0]
+	df.index[0]
+
+#Row selection
+data.iloc[1] # second row of data frame
+data.iloc[-1] # last row of data frame 
+
+#Column selection
+data.iloc[:,1] # second column of data frame (last_name)
+data.iloc[:,-1] # last column of data frame (id)
+data.iloc[0:5] # first five rows of dataframe
+data.iloc[:, 0:2] # first two columns of data frame with all rows
+
+#concat & merge dataframe 
+http://www.python-simple.com/python-pandas/concatenations-joins-dataframe.php
+
+# Add dataframe
+df.append(df2, ignore_index=True)
+
+
+==========================================================================================================
+Dialogue boxes
+==========================================================================================================
+
+#Basic input box
+a=input('enter something')
+
+import tkinter as tk
+from tkinter import filedialog
+
+==========================================================================================================
+Create file
+==========================================================================================================
+import pandas as pd
+import os
+
+TEST = {'Name':['Total','CAC 40'],'Ticker':['FP.PA','%5EFCHI']}
+
+df = pd.DataFrame(TEST,columns=['Name','Ticker'])
+
+print(df.iloc[1,0])

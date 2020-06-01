@@ -1,0 +1,377 @@
+
+import numpy as np
+import pandas as pd
+from pandas_datareader import data (#import the package pandas_datareader)
+
+=====================================
+Import Financial data - Method 1
+=====================================
+import pandas.io.data as web (#not mandatory)
+
+sp500 = web.DataReader('^GSPC', data_source='yahoo', start='1/1/2000') #, end='5/14/2020')
+sp500['Close'].plot(grid=True, figsize=(8, 5))
+
+
+
+=====================================
+Import Financial data - Method 2
+=====================================
+
+from pandas_datareader import data
+import matplotlib.pyplot as plt
+import pandas as pd
+
+# Define the instruments to download. We would like to see Apple, Microsoft and the S&P500 index.
+tickers = ['AAPL', 'MSFT', '^GSPC']
+
+# We would like all available data from 01/01/2000 until 12/31/2016.
+start_date = '2010-01-01'
+end_date = '2016-12-31'
+
+# User pandas_reader.data.DataReader to load the desired data. As simple as that.
+panel_data = data.DataReader('INPX', 'google', start_date, end_date)
+
+=====================================
+Join fundtion
+=====================================
+https://jakevdp.github.io/PythonDataScienceHandbook/03.07-merge-and-join.html
+
+import pandas as pd
+import numpy as np
+
+df6 = pd.DataFrame({'name': ['Peter', 'Paul', 'Mary'],
+                    'food': ['fish', 'beans', 'bread']},
+                   columns=['name', 'food'])
+df7 = pd.DataFrame({'employee': ['Mary', 'Joseph'],
+                    'drink': ['wine', 'beer']},
+                   columns=['employee', 'drink'])
+
+display(df6, df7, pd.merge(df6, df7,how='inner',left_on="name", right_on="employee").del('employee', axis=1)) #.drop('employee', axis=1))
+
+#The result contains the intersection of the two sets of inputs; this is what is known as an inner join
+pd.merge(df6, df7, how='inner')
+
+
+#An outer join returns a join over the union of the input columns, and fills in all missing values with NAs:
+display(df6, df7, pd.merge(df6, df7, how='outer'))
+
+#The left join and right join return joins over the left entries and right entries, respectively.
+display(df6, df7, pd.merge(df6, df7, how='left'))
+display(df6, df7, pd.merge(df6, df7, how='right'))
+
+
+=================================================================================
+Charts
+=================================================================================
+
+df[['Close', 'Return']].plot(subplots=True, style='b',figsize=(8, 5))
+
+display instead of print
+
+=================================================================================
+Returns
+=================================================================================
+#Daily retunrs
+#Verctorisation (faster)
+
+df['Return Vect']=df['Adj Close']/df['Adj Close'].shift(1) #np.log(df['Adj Close']/df['Adj Close'].shift(1))
+df.del('Return2', axis=1)
+
+#Return moving average (42 days and 252 days)
+df['42d'] = pd.rolling_mean(df['Adj Close'], window=42)
+df['252d'] = pd.rolling_mean(df['Adj Close'], window=252)
+
+df[['Adj Close', '42d', '252d']].tail()
+
+#Chart
+df[['Adj Close', '42d', '252d']].plot(figsize=(8, 5))
+
+=================================================================================
+Volatility
+=================================================================================
+# moving annual volatility
+
+import math
+
+df['Mov_Vol'] = pd.rolling_std(df['Return'], window=252) * math.sqrt(252)
+
+#Chart
+df[['Adj Close', 'Mov_Vol', 'Return']].plot(subplots=True, style='b',figsize=(8, 7))
+
+=================================================================================
+Extraction
+=================================================================================
+#Line extraction
+df.loc([0,2]) # extraction lines 1 & 3)
+df.loc([0:2]) # extraction lines from 1 to 3)
+
+#Column extraction
+df.loc([:,"height":"age"])
+df.iloc([:,0:2])
+
+#extractions lines and columns
+df.iloc[0:2, 1,3]) #extraction lines from 1 to 3 and columns 2 and 4
+
+#Rename dataframe
+df.rename(index=str, columns={"weight": "masse", "age" : "annees"}, inplace=True)
+
+=================================================================================
+Filter & NA values
+=================================================================================
+df["age"] < 30
+df.query("weight > 120 and height < 62"))
+
+df.dropna()
+df.fillna(-9999) #Complete NA with a specific value
+
+#Line suppression
+df.drop([0,3])
+
+=================================================================================
+GroupBy Operations
+=================================================================================
+
+groups=df.groupby(['Quarter', 'Odd_Even'])
+
+
+=================================================================================
+Regression Analysis
+=================================================================================
+import pandas as pd
+from urllib import urlretrieve
+
+#Data retrieved from web and saved in the local drive in the data folder
+es_url = 'http://www.stoxx.com/download/historical_values/hbrbcpe.txt'
+vs_url = 'http://www.stoxx.com/download/historical_values/h_vstoxx.txt'
+urlretrieve(es_url, './data/es.txt')
+urlretrieve(vs_url, './data/vs.txt')
+!ls -o ./data/*.txt
+
+
+#Remove all blanks
+lines = open('./data/es.txt', 'r').readlines()
+lines = [line.replace(' ', '') for line in lines]
+
+#Checks couples of lines
+lines[:6]
+
+#Adjust initial file (p159)
+new_file = open('./data/es50.txt', 'w')
+# opens a new file
+new_file.writelines('date' + lines[3][:-1]
++ ';DEL' + lines[3][-1])
+# writes the corrected third line of the original file
+# as first line of new file
+new_file.writelines(lines[4:])
+# writes the remaining lines of the orignial file
+new_file.close()
+es = pd.read_csv('./data/es50.txt', index_col=0,
+parse_dates=True, sep=';', dayfirst=True)
+np.round(es.tail())
+del es['DEL']
+es.info()
+
+#Adjustment of the initial columns names
+cols = ['SX5P', 'SX5E', 'SXXP', 'SXXE', 'SXXF',
+'SXXA', 'DK5F', 'DKXF']
+es = pd.read_csv(es_url, index_col=0, parse_dates=True,sep=';', dayfirst=True, header=None,
+skiprows=4, names=cols)
+es.tail()
+
+# Import 2 dataset from 01/01/19990 (commun dates)
+import datetime as dt
+data = pd.DataFrame({'EUROSTOXX' : es['SX5E'][es.index > dt.datetime(1999, 1, 1)]})
+data = data.join(pd.DataFrame({'VSTOXX' : vs['V2TX'][vs.index > dt.datetime(1999, 1, 1)]}))
+
+es = pd.read_csv('./data/es50.txt', index_col=0, parse_dates=True, sep=';', dayfirst=True)
+np.round(es.tail())
+
+#Fill missing values with the last available values from the time series
+data = data.fillna(method='ffill')
+data.info()
+
+#Chart
+data.plot(subplots=True, grid=True, style='b', figsize=(8, 6))
+
+#Log returns
+rets = np.log(data / data.shift(1))
+
+#Chart
+rets.plot(subplots=True, grid=True, style='b', figsize=(8, 6))
+
+#Regression analysis on returns
+xdat = rets['EUROSTOXX']
+ydat = rets['VSTOXX']
+model = pd.ols(y=ydat, x=xdat)
+model
+model.beta
+
+#Chart of the regression
+##Regression correlation
+plt.plot(xdat, ydat, 'r.')
+ax = plt.axis() # grab axis values
+x = np.linspace(ax[0], ax[1] + 0.01)
+plt.plot(x, model.beta[1] + model.beta[0] * x, 'b', lw=2)
+plt.grid(True)
+plt.axis('tight')
+plt.xlabel('EURO STOXX 50 returns')
+plt.ylabel('VSTOXX returns')
+
+##Regression correlation
+#correlation between the two financial time series
+rets.corr()
+pd.rolling_corr(rets['EUROSTOXX'], rets['VSTOXX'], window=252).plot(grid=True, style='b')
+
+=========================================================================================================================================
+#High frequency data
+=========================================================================================================================================
+
+import numpy as np
+import pandas as pd
+import datetime as dt
+from urllib import urlretrieve
+%matplotlib inline
+
+url1 = 'http://hopey.netfonds.no/posdump.php?'
+url2 = 'date=%s%s%s&paper=AAPL.O&csv_format=csv'
+url = url1 + url2
+
+year = '2014'
+month = '09'
+days = ['22', '23', '24', '25']
+# dates might need to be updated
+
+AAPL = pd.DataFrame()
+for day in days:
+AAPL = AAPL.append(pd.read_csv(url % (year, month, day),index_col=0, header=0, parse_dates=True))
+AAPL.columns = ['bid', 'bdepth', 'bdeptht',
+'offer', 'odepth', 'odeptht']
+# shorter colummn names
+
+AAPL['bid'].plot()
+to_plot = AAPL[['bid', 'bdeptht']][(AAPL.index > dt.datetime(2014, 9, 22, 0, 0))& (AAPL.index < dt.datetime(2014, 9, 23, 2, 59))]
+# adjust dates to given data set
+to_plot.plot(subplots=True, style='b', figsize=(8, 5))
+
+#Data resampling for ensuring a consistent time interval between 2 obersations which is 5 mn
+AAPL_resam = AAPL.resample(rule='5min', how='mean')
+np.round(AAPL_resam.head(), 2)
+
+#Chart
+AAPL_resam['bid'].fillna(method='ffill').plot()
+
+def reversal(x):
+return 2 * 95 - x
+
+AAPL_resam['bid'].fillna(method='ffill').apply(reversal).plot()
+!rm ./data/*
+# Windows: del /data/*
+#Erase data from the disk
+
+
+==================================================================================================
+Black Scholes Model (MC Model)
+==================================================================================================
+#
+# Monte Carlo valuation of European call options with pure Python
+# mcs_pure_python.py
+#
+from time import time
+from math import exp, sqrt, log
+from random import gauss, seed
+seed(20000)
+t0 = time()
+
+#Parameters
+S0 = 100. # initial value
+K = 105. # strike price
+T = 1.0 # maturity
+r = 0.05 # riskless short rate
+sigma = 0.2 # volatility
+M = 50 # number of time steps
+dt = T / M # length of time interval
+I = 250000 # number of paths 
+
+# Simulating I paths with M time steps
+S = []
+for i in range(I):
+path = []
+for t in range(M + 1):
+if t == 0:
+path.append(S0)
+else:
+z = gauss(0.0, 1.0)
+St = path[t - 1] * exp((r - 0.5 * sigma ** 2) * dt + sigma * sqrt(dt) * z)
+path.append(St)
+S.append(path)
+
+# Calculating the Monte Carlo estimator
+C0 = exp(-r * T) * sum([max(path[-1] - K, 0) for path in S]) / I
+# Results output
+tpy = time() - t0
+print "European Option Value %7.3f" % C0
+print "Duration in Seconds %7.3f" % tpy
+
+==================================================================================================
+Black Scholes Model (Deterministic Model)
+==================================================================================================
+
+import numpy as np
+import numpy.random as npr
+import matplotlib.pyplot as plt
+%matplotlib inline
+
+S0 = 100 # initial value
+r = 0.05 # constant short rate
+sigma = 0.25 # constant volatility
+T = 2.0 # in years
+I = 10000 # number of random draws
+
+#Sdt normal
+ST1 = S0 * np.exp((r - 0.5 * sigma ** 2) * T
++ sigma * np.sqrt(T) * npr.standard_normal(I))
+
+plt.hist(ST1, bins=50)
+plt.xlabel('index level')
+plt.ylabel('frequency')
+plt.grid(True)
+
+#Log normal
+ST2 = S0 * npr.lognormal((r - 0.5 * sigma ** 2) * T,
+sigma * np.sqrt(T), size=I)
+
+plt.hist(ST2, bins=50)
+plt.xlabel('index level')
+plt.ylabel('frequency')
+plt.grid(True)
+
+==================================================================================================
+Poisson, Chi square, Normal, Standard normal
+==================================================================================================
+
+sample_size = 500
+rn1 = npr.standard_normal(sample_size)
+rn2 = npr.normal(100, 20, sample_size)
+rn3 = npr.chisquare(df=0.5, size=sample_size)
+rn4 = npr.poisson(lam=1.0, size=sample_size)
+
+fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(nrows=2, ncols=2,figsize=(7, 7))
+
+ax1.hist(rn1, bins=25)
+ax1.set_title('standard normal')
+ax1.set_ylabel('frequency')
+ax1.grid(True)
+
+ax2.hist(rn2, bins=25)
+ax2.set_title('normal(100, 20)')
+ax2.grid(True)
+
+ax3.hist(rn3, bins=25)
+ax3.set_title('chi square')
+ax3.set_ylabel('frequency')
+ax3.grid(True)
+
+ax4.hist(rn4, bins=25)
+ax4.set_title('Poisson')
+ax4.grid(True)
+
